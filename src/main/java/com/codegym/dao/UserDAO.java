@@ -10,17 +10,5 @@ public class UserDAO implements IUserDAO {
  public void update(User u)throws SQLException { try(Connection c=connect();PreparedStatement p=c.prepareStatement("UPDATE users SET name=?,email=?,country=? WHERE id=?")){setUser(p,u);p.setInt(4,u.getId());p.executeUpdate();} }
  public void delete(int id)throws SQLException { try(Connection c=connect();PreparedStatement p=c.prepareStatement("DELETE FROM users WHERE id=?")){p.setInt(1,id);p.executeUpdate();} }
  private void setUser(PreparedStatement p,User u)throws SQLException {p.setString(1,u.getName());p.setString(2,u.getEmail());p.setString(3,u.getCountry());}
- public void insertUpdateWithoutTransaction() throws SQLException {
-  String insertSql="INSERT INTO Employee (name,salary,created_Date) VALUES (?,?,?)";
-  String updateSql="UPDATE Employee SET salary=? WHERE name=?";
-  String dropSql="DROP TABLE IF EXISTS Employee";
-  String createSql="CREATE TABLE Employee (id INT AUTO_INCREMENT PRIMARY KEY,name VARCHAR(120) NOT NULL,salary DECIMAL(15,2) NOT NULL,created_Date TIMESTAMP)";
-  try(Connection c=connect();Statement st=c.createStatement();PreparedStatement insert=c.prepareStatement(insertSql);PreparedStatement update=c.prepareStatement(updateSql)) {
-   st.execute(dropSql); st.execute(createSql);
-   insert.setString(1,"Quynh"); insert.setBigDecimal(2,new java.math.BigDecimal("10")); insert.setTimestamp(3,java.sql.Timestamp.valueOf(java.time.LocalDateTime.now())); insert.executeUpdate();
-   insert.setString(1,"Ngan"); insert.setBigDecimal(2,new java.math.BigDecimal("20")); insert.setTimestamp(3,java.sql.Timestamp.valueOf(java.time.LocalDateTime.now())); insert.executeUpdate();
-   update.setBigDecimal(2,new java.math.BigDecimal("999.99")); update.setString(2,"Quynh"); update.executeUpdate();
-  } catch(SQLException e) { System.out.println("Đã bắt được lỗi trong quá trình thực thi SQL:"); e.printStackTrace(); }
- } public void addUserTransaction(User u,int[] permissionIds)throws SQLException { try(Connection c=connect()){c.setAutoCommit(false);try{int userId;try(PreparedStatement p=c.prepareStatement("INSERT INTO users(name,email,country) VALUES(?,?,?)",Statement.RETURN_GENERATED_KEYS)){setUser(p,u);p.executeUpdate();try(ResultSet r=p.getGeneratedKeys()){if(!r.next())throw new SQLException("Could not obtain generated user id");userId=r.getInt(1);}}if(permissionIds!=null){try(PreparedStatement p=c.prepareStatement("INSERT INTO user_permission(user_id,permission_id) VALUES(?,?)")){for(int permissionId:permissionIds){p.setInt(1,userId);p.setInt(2,permissionId);p.executeUpdate();}}}c.commit();}catch(SQLException e){try{c.rollback();}catch(SQLException rollback){e.addSuppressed(rollback);}throw e;}finally{try{c.setAutoCommit(true);}catch(SQLException ignored){}}} }
+ public void addUserTransaction(User u,int[] permissionIds)throws SQLException { try(Connection c=connect()){c.setAutoCommit(false);try{int userId;try(PreparedStatement p=c.prepareStatement("INSERT INTO users(name,email,country) VALUES(?,?,?)",Statement.RETURN_GENERATED_KEYS)){setUser(p,u);p.executeUpdate();try(ResultSet r=p.getGeneratedKeys()){if(!r.next())throw new SQLException("Could not obtain generated user id");userId=r.getInt(1);}}if(permissionIds!=null){try(PreparedStatement p=c.prepareStatement("INSERT INTO user_permission(user_id,permission_id) VALUES(?,?)")){for(int permissionId:permissionIds){p.setInt(1,userId);p.setInt(2,permissionId);p.executeUpdate();}}}c.commit();}catch(SQLException e){try{c.rollback();}catch(SQLException rollback){e.addSuppressed(rollback);}throw e;}finally{try{c.setAutoCommit(true);}catch(SQLException ignored){}}} }
 }
-
